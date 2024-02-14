@@ -2,7 +2,7 @@ import csv
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -22,6 +22,11 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
+# with app.app_context():
+#     sec_settings = Settings.query.first()
+#     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=sec_settings.afk_time)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -30,18 +35,22 @@ def load_user(user_id):
 @app.route('/')
 def index():
     # TODO Добавить что нибудь
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.is_authenticated:
         return redirect(url_for('profile'))
     else:
-        return render_template('index.html')
+        return render_template('index.html', afk_time=afk_time)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.is_authenticated:
         return redirect(url_for('profile'))
     if request.method == 'POST':
-        sec_settings = Settings.query.first()
+        security_settings = Settings.query.first()
 
         username = request.form['username']
         password = request.form['password']
@@ -53,7 +62,7 @@ def login():
                 log_audit_event(username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr), 'Вход',
                                 'Попытка входа заблокированного пользователя')
                 flash('The number of failed authorization attempts has been exceeded. Try later', 'warning')
-                return render_template('login.html')
+                return render_template('login.html', afk_time=afk_time)
 
             if check_password_hash(user.password, password):
                 login_user(user)
@@ -72,8 +81,8 @@ def login():
                 db.session.commit()
 
                 # Проверка и блокировка учетной записи после трех неудачных попыток
-                if user.unsuccessful_login_attempts >= sec_settings.count_failure_attempts:
-                    time_out = timedelta(minutes=sec_settings.time_lock)
+                if user.unsuccessful_login_attempts >= security_settings.count_failure_attempts:
+                    time_out = timedelta(minutes=security_settings.time_lock)
                     user.end_time_out = datetime.now() + time_out
                     db.session.commit()
 
@@ -86,7 +95,7 @@ def login():
                             'Пользователь ввел некорректный логин или пароль')
             flash('Invalid username or password', 'warning')
 
-    return render_template('login.html')
+    return render_template('login.html', afk_time=afk_time)
 
 
 @app.route('/logout')
@@ -101,6 +110,8 @@ def logout():
 @app.route('/admin_panel')
 @login_required
 def admin_panel():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.role != 'ADMINISTRATOR':
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Открытие панели администратора',
@@ -109,12 +120,14 @@ def admin_panel():
     log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                     'Открытие панели администратора',
                     'Пользователь открыл панель администратора')
-    return render_template('admin_panel.html')
+    return render_template('admin_panel.html', afk_time=afk_time)
 
 
 @app.route('/admin_panel/create_new_user', methods=['GET', 'POST'])
 @login_required
 def create_new_user():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.role != 'ADMINISTRATOR':
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Создание учетных записей',
@@ -141,12 +154,14 @@ def create_new_user():
                             'Создание учетных записей',
                             'Пользователь создал новую учетную запись')
             flash(' Account created successfully.\nLogin: ' + username + '\nPassword: ' + password, 'info')
-    return render_template('create_new_user.html')
+    return render_template('create_new_user.html', afk_time=afk_time)
 
 
 @app.route('/admin_panel/user_list', methods=['GET', 'POST'])
 @login_required
 def user_list():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.role != 'ADMINISTRATOR':
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Управление учетными записями пользователей',
@@ -157,7 +172,7 @@ def user_list():
                     'Управление учетными записями пользователей',
                     'Пользователь открыл список пользователей')
 
-    return render_template('user_list.html', users=users)
+    return render_template('user_list.html', users=users, afk_time=afk_time)
 
 
 @app.route('/admin_panel/user_list/delete_user/<int:user_id>', methods=['POST'])
@@ -181,6 +196,8 @@ def delete_user(user_id):
 @app.route('/admin_panel/user_list/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     if current_user.role != 'ADMINISTRATOR':
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Управление учетными записями пользователей',
@@ -196,39 +213,43 @@ def edit_user(user_id):
                         'Управление учетными записями пользователей',
                         f'Пользователь изменил учетную запись пользователя с id: {user_id}')
         return redirect(url_for('user_list'))
-    return render_template('edit_user.html', user=user)
+    return render_template('edit_user.html', user=user, afk_time=afk_time)
 
 
 @app.route('/admin_panel/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    security_settings = Settings.query.first()
+
     if current_user.role != 'ADMINISTRATOR':
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Настройки безопасности',
                         'Пользователь пытался получить доступ к настройкам безопасности')
         return redirect(url_for('login'))
-    sec_settings = Settings.query.first()
     if request.method == 'POST':
         count_failure_attempts = request.form['count_failure_attempts']
         time_lock = request.form['time_lock']
         afk_time = request.form['afk_time']
-        sec_settings.count_failure_attempts = count_failure_attempts
-        sec_settings.time_lock = time_lock
-        sec_settings.afk_time = afk_time
+        security_settings.count_failure_attempts = count_failure_attempts
+        security_settings.time_lock = time_lock
+        security_settings.afk_time = afk_time
         db.session.commit()
         log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                         'Настройки безопасности',
                         'Пользователь изменил настройки безопасности')
-    return render_template('settings.html', sec_settings=sec_settings)
+    afk_time = security_settings.afk_time * 60000
+    return render_template('settings.html', sec_settings=security_settings, afk_time=afk_time)
 
 
 @app.route('/profile')
 @login_required
 def profile():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
     log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
                     'Профиль',
                     'Пользователь посетил страницу своего профиля')
-    return render_template('profile.html', user=current_user)
+    return render_template('profile.html', user=current_user, afk_time=afk_time)
 
 
 # @app.route('/track_event', methods=['POST'])
@@ -268,8 +289,21 @@ def export_archived_logs(logs):
             writer.writerow([log.timestamp, log.username, log.user_ip, log.action, log.details])
 
 
-scheduler.add_job(archive_audit_log, "interval", seconds=5)
-# scheduler.add_job(archive_audit_log, "interval", minutes=5)
+# scheduler.add_job(archive_audit_log, "interval", seconds=5)
+scheduler.add_job(archive_audit_log, "interval", minutes=5)
+
+
+@app.route('/logout_afk', methods=['GET'])
+@login_required
+def logout_afk():
+    # Обновление сеанса пользователя
+    log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                    'Выход',
+                    'Отключение пользователя из-за бездействия')
+    print('logout_afk')
+    logout_user()
+    return jsonify(status='success')
+
 
 if __name__ == '__main__':
     with app.app_context():
