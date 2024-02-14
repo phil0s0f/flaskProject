@@ -1,9 +1,13 @@
+import csv
+
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from logging_module import log_audit_event
-from models import User, Settings, db
+from models import User, Settings, db, Log
 from password_generator import password_generate
 from datetime import datetime, timedelta
 
@@ -14,6 +18,8 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 
 @login_manager.user_loader
@@ -23,7 +29,7 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    # TODO: Добавить какой то функционал для обычных пользователей
+    # TODO Добавить что нибудь
     if current_user.is_authenticated:
         return redirect(url_for('profile'))
     else:
@@ -224,6 +230,46 @@ def profile():
                     'Пользователь посетил страницу своего профиля')
     return render_template('profile.html', user=current_user)
 
+
+# @app.route('/track_event', methods=['POST'])
+# def track_event():
+#     data = request.get_json()
+#     event = data.get('event')
+#
+#     print(f'Tab event: {event}')
+#     log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+#                     'Система',
+#                     event)
+#     return '', 204
+
+
+def archive_audit_log():
+    with app.app_context():
+        logs_to_archive = Log.query.filter(Log.archive == False).all()
+        # logs_to_archive = Log.query.all()
+        for log in logs_to_archive:
+            log.archive = True
+        export_archived_logs(logs_to_archive)
+        db.session.commit()
+        log_audit_event(None, 'server',
+                        'Система',
+                        'Архивирование записей журнала аудита')
+
+
+def export_archived_logs(logs):
+    # Открываем CSV файл для записи
+    with open('archived_logs.csv', 'a', newline='') as f:
+        # Создаем объект writer для записи данных в CSV файл
+        writer = csv.writer(f)
+        # Записываем заголовки
+        writer.writerow(['Timestamp', 'Username', 'User IP', 'Action', 'Details'])
+        # Записываем данные каждой архивированной записи в CSV файл
+        for log in logs:
+            writer.writerow([log.timestamp, log.username, log.user_ip, log.action, log.details])
+
+
+scheduler.add_job(archive_audit_log, "interval", seconds=5)
+# scheduler.add_job(archive_audit_log, "interval", minutes=5)
 
 if __name__ == '__main__':
     with app.app_context():

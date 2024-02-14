@@ -13,6 +13,41 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <!-- кастомные стили -->
     <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+{#    <script>#}
+{#        window.onload = function () {#}
+{#            // Отправить запрос на сервер Flask при открытии вкладки#}
+{#            fetch('/track_event', {#}
+{#                method: 'POST',#}
+{#                headers: {#}
+{#                    'Content-Type': 'application/json'#}
+{#                },#}
+{#                body: JSON.stringify({event: 'Вкладка открыта'})#}
+{#            });#}
+{#        };#}
+{##}
+{#        window.onunload = function () {#}
+{#            // Отправить запрос на сервер Flask при закрытии вкладки#}
+{#            fetch('/track_event', {#}
+{#                method: 'POST',#}
+{#                headers: {#}
+{#                    'Content-Type': 'application/json'#}
+{#                },#}
+{#                body: JSON.stringify({event: 'Вкладка закрыта'})#}
+{#            });#}
+{#        };#}
+{##}
+{#        window.addEventListener('unload', function(event) {#}
+{#        // Отправить запрос на сервер Flask при закрытии вкладки#}
+{#        fetch('/track_event', {#}
+{#            method: 'POST',#}
+{#            headers: {#}
+{#                'Content-Type': 'application/json'#}
+{#            },#}
+{#            body: JSON.stringify({ event: 'Вкладка закрыта' })#}
+{#        });#}
+{#    });#}
+{#    </script>#}
+
 </head>
 <body>
 

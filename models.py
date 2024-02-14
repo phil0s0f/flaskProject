@@ -23,6 +23,7 @@ class Log(db.Model):
     user_ip = db.Column(db.String(50))
     action = db.Column(db.String(100))
     details = db.Column(db.Text)
+    archive = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return f'<ID {self.id}>'
