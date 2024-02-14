@@ -146,7 +146,7 @@ def settings():
                         'Настройки безопасности',
                         'Пользователь пытался получить доступ к настройкам безопасности')
         return redirect(url_for('login'))
-    return render_template('profile.html', user=current_user)  # TODO
+    return render_template('profile.html', user=current_user)  # TODO добавить настройки безопасности
 
 
 @app.route('/profile')
