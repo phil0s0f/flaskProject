@@ -146,7 +146,18 @@ def settings():
                         'Настройки безопасности',
                         'Пользователь пытался получить доступ к настройкам безопасности')
         return redirect(url_for('login'))
-    return render_template('profile.html', user=current_user)  # TODO добавить настройки безопасности
+    sec_settings = Settings.query.first()
+    if request.method == 'POST':
+        count_failure_attempts = request.form['count_failure_attempts']
+        time_lock = request.form['time_lock']
+        afk_time = request.form['afk_time']
+        sec_settings.count_failure_attempts = count_failure_attempts
+        sec_settings.time_lock = time_lock
+        sec_settings.afk_time = afk_time
+        db.session.commit()
+
+    return render_template('settings.html', sec_settings=sec_settings)
+
 
 @app.route('/profile')
 @login_required

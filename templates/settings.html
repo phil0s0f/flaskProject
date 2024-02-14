@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="text-center">Настройки безопасности</h1>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="count_failure_attempts" class="form-label">Количество неудачных попыток для
+                                    блокировки:</label>
+                                <input type="number" class="form-control" id="count_failure_attempts" min="1" max="10"
+                                       name="count_failure_attempts" value="{{ sec_settings.count_failure_attempts }}"
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="time_lock" class="form-label">Время блокировки учетной записи(в
+                                    минутах):</label>
+                                <input type="number" class="form-control" id="time_lock" name="time_lock" min="1"
+                                       value="{{ sec_settings.time_lock }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="afk_time" class="form-label">Время простоя для блокировки сеанса доступа(в
+                                    минутах):</label>
+                                <input type="number" class="form-control" id="afk_time" name="afk_time" min="1"
+                                       value="{{ sec_settings.afk_time }}" required>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
