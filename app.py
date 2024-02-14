@@ -150,6 +150,7 @@ def settings():
 
 
 
+
 @app.route('/profile')
 @login_required
 def profile():
