@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="text-center">Панель администратора</h1>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a class="list-group-item list-group-item-action" href="{{ url_for('create_new_user') }}">Создать
+                                нового пользователя</a>
+                            <a class="list-group-item list-group-item-action" href="#">Управление учетными записями
+                                пользователей</a>
+                            <a class="list-group-item list-group-item-action" href="#">Журнал аудита</a>
+                            <a class="list-group-item list-group-item-action" href="{{ url_for('settings') }}">Настройки</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

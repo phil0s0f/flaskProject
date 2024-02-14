@@ -20,7 +20,6 @@ def password_generate(username):
     password.extend(numbers_for_password)
     password.extend(random.choices(symbol_tuple, k=3))
     password.append(random.choice(string.ascii_uppercase))
-
     p = n ** 2 % 10 + n ** 3 % 10 + 1
     password.append(string.ascii_lowercase[p - 1])
     return ''.join(map(str, password))
