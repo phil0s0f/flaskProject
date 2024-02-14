@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="text-center">Список учетных записей пользователей</h1>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group ">
+                            {% if users %}
+                                {% for user in users %}
+                                    <li class="list-group-item">
+                                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post">
+                                            {{ user.username }}
+                                            <div class="pull-right">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm ">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                                <a class="btn btn-outline-secondary btn-sm"
+                                                   href="{{ url_for('edit_user', user_id=user.id) }}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                            </div>
+                                        </form>
+                                    </li>
+
+                                {% endfor %}
+                            {% else %}
+                                <p>Пользователи не найдены.</p>
+                            {% endif %}
+                        </ul>
+                        {#                        <a class="list-group-item list-group-item-action" href="#">Управление учетными записями#}
+                        {#                            пользователей</a>#}
+                        {#                        <a class="list-group-item list-group-item-action" href="#">Журнал аудита</a>#}
+                        {#                        <a class="list-group-item list-group-item-action"#}
+                        {#                           href="{{ url_for('settings') }}">Настройки</a>#}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

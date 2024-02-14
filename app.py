@@ -138,6 +138,61 @@ def create_new_user():
     return render_template('create_new_user.html')
 
 
+@app.route('/admin_panel/user_list', methods=['GET', 'POST'])
+@login_required
+def user_list():
+    if current_user.role != 'ADMINISTRATOR':
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Управление учетными записями пользователей',
+                        'Пользователь пытался получить доступ к управлению учетными записями пользователей')
+        return redirect(url_for('login'))
+    users = User.query.filter(User.username != 'admin').all()
+    log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                    'Управление учетными записями пользователей',
+                    'Пользователь открыл список пользователей')
+
+    return render_template('user_list.html', users=users)
+
+
+@app.route('/admin_panel/user_list/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'ADMINISTRATOR':
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Управление учетными записями пользователей',
+                        f'Пользователь пытался удалить учетную запись пользователя с id: {user_id}')
+        return redirect(url_for('login'))
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Управление учетными записями пользователей',
+                        f'Пользователь удалил учетную запись пользователя с id: {user_id}')
+    return redirect(url_for('user_list'))
+
+
+@app.route('/admin_panel/user_list/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    if current_user.role != 'ADMINISTRATOR':
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Управление учетными записями пользователей',
+                        f'Пользователь пытался изменить учетную запись пользователя с id: {user_id}')
+        return redirect(url_for('login'))
+    user = User.query.get(user_id)
+    if not user:
+        return redirect(url_for('user_list'))
+    if request.method == 'POST':
+        user.username = request.form['username']
+        db.session.commit()
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Управление учетными записями пользователей',
+                        f'Пользователь изменил учетную запись пользователя с id: {user_id}')
+        return redirect(url_for('user_list'))
+    return render_template('edit_user.html', user=user)
+
+
 @app.route('/admin_panel/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -155,13 +210,18 @@ def settings():
         sec_settings.time_lock = time_lock
         sec_settings.afk_time = afk_time
         db.session.commit()
-
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Настройки безопасности',
+                        'Пользователь изменил настройки безопасности')
     return render_template('settings.html', sec_settings=sec_settings)
 
 
 @app.route('/profile')
 @login_required
 def profile():
+    log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                    'Профиль',
+                    'Пользователь посетил страницу своего профиля')
     return render_template('profile.html', user=current_user)
 
 
