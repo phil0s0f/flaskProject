@@ -149,9 +149,6 @@ def settings():
     return render_template('profile.html', user=current_user)  # TODO добавить настройки безопасности
 
 
-
-
-
 @app.route('/profile')
 @login_required
 def profile():
