@@ -9,6 +9,26 @@
                         <h1 class="text-center">Журнал аудита</h1>
                     </div>
                     <div class="card-body">
+                        <form action="">
+                            <label>
+                                <input type="text" placeholder="Дата и время"/>
+                            </label>
+                            <label>
+                                <input type="text" placeholder="Логин пользователя"/>
+                            </label>
+                            <label>
+                                <input type="text" placeholder="IP пользователя"/>
+                            </label>
+                            <label>
+                                <input type="text" placeholder="Действие"/>
+                            </label>
+                            <label>
+                                <input type="text" placeholder="Подробности"/>
+                            </label>
+                            <label>
+                                <input type="text" placeholder="Статус записи"/>
+                            </label>
+                        </form>
                         <table class="table table-sm table-striped table-hover">
                             <thead class="thead-light">
                             <tr>
@@ -18,7 +38,7 @@
                                 <th scope="col">IP пользователя</th>
                                 <th scope="col">Действие</th>
                                 <th scope="col">Подробности</th>
-                                <th scope="col">Архивная запись</th>
+                                <th scope="col">Статус</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -32,16 +52,92 @@
                                     <td>{{ log.details }}</td>
                                     <td>
                                         {% if log.archive %}
-                                            Да
+                                            В архиве
                                         {% else %}
-                                            Нет
+                                            Действующая
                                         {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
                         </table>
+
                     </div>
                 </div>
+                <script id="rendered-js">
+                    function formTable(selector) {
+                        var wrapper = document.querySelector(selector);
+                        var form = wrapper.getElementsByTagName("form")[0];
+                        var table = wrapper.getElementsByTagName("table")[0];
+
+                        form.onkeyup = function (ev) {
+                            var
+                                date_time = form.elements[0].value,
+                                login = form.elements[1].value,
+                                ip = form.elements[2].value,
+                                action = form.elements[3].value,
+                                detail = form.elements[4].value,
+                                archive = form.elements[5].value;
+
+
+                            for (var i = 1; i < table.rows.length; i++) {
+                                table.rows[i].className = "";
+
+                                if (
+                                    table.rows[i].cells[1].innerHTML.indexOf(date_time) == -1 ||
+                                    table.rows[i].cells[2].innerHTML.indexOf(login) == -1 ||
+                                    table.rows[i].cells[3].innerHTML.indexOf(ip) == -1 ||
+                                    table.rows[i].cells[4].innerHTML.indexOf(action) == -1 ||
+                                    table.rows[i].cells[5].innerHTML.indexOf(detail) == -1 ||
+                                    table.rows[i].cells[6].innerHTML.indexOf(archive) == -1
+                                ) {
+                                    table.rows[i].className = "hide";
+                                }
+                            }
+                        }
+                    }
+
+                    formTable(".card");
+
+                    // Функция для сортировки данных по выбранному столбцу
+                    function sortTable(columnIndex) {
+                        const table = document.querySelector('.table');
+                        const tbody = table.querySelector('tbody');
+                        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                        // Определяем порядок сортировки: по возрастанию или убыванию
+                        const sortOrder = table.getAttribute('data-sort-order') === 'asc' ? 'desc' : 'asc';
+                        table.setAttribute('data-sort-order', sortOrder);
+
+                        // Сортируем строки таблицы в соответствии с выбранным столбцом и порядком сортировки
+                        rows.sort((rowA, rowB) => {
+                            const valueA = rowA.cells[columnIndex].innerText.trim();
+                            const valueB = rowB.cells[columnIndex].innerText.trim();
+
+                            // Преобразуем строки даты и времени в объекты Moment и сравниваем их
+                            const dateA = moment(valueA, 'YYYY-MM-DD HH:mm:ss.SSSSSS');
+                            const dateB = moment(valueB, 'YYYY-MM-DD HH:mm:ss.SSSSSS');
+
+                            if (dateA.isValid() && dateB.isValid()) {
+                                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+                            } else {
+                                return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                            }
+                        });
+
+                        // Удаляем существующие строки из таблицы
+                        tbody.innerHTML = '';
+
+                        // Вставляем отсортированные строки обратно в таблицу
+                        rows.forEach(row => tbody.appendChild(row));
+                    }
+
+
+                    // При клике на заголовок столбца вызываем функцию сортировки
+                    document.querySelectorAll('th').forEach((header, index) => {
+                        header.addEventListener('click', () => sortTable(index));
+                    });
+
+                </script>
             </div>
         </div>
     </div>
