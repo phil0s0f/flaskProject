@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="text-center">Журнал аудита</h1>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="thead-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Дата и время</th>
+                                <th scope="col">Логин пользователя</th>
+                                <th scope="col">IP пользователя</th>
+                                <th scope="col">Действие</th>
+                                <th scope="col">Подробности</th>
+                                <th scope="col">Архивная запись</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for log in logs %}
+                                <tr>
+                                    <th scope="row">{{ loop.index }}</th>
+                                    <td>{{ log.timestamp }}</td>
+                                    <td>{{ log.username }}</td>
+                                    <td>{{ log.user_ip }}</td>
+                                    <td>{{ log.action }}</td>
+                                    <td>{{ log.details }}</td>
+                                    <td>
+                                        {% if log.archive %}
+                                            Да
+                                        {% else %}
+                                            Нет
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

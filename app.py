@@ -241,6 +241,25 @@ def settings():
     return render_template('settings.html', sec_settings=security_settings, afk_time=afk_time)
 
 
+@app.route('/admin_panel/audit', methods=['GET', 'POST'])
+@login_required
+def audit():
+    security_settings = Settings.query.first()
+    afk_time = security_settings.afk_time * 60000
+    if current_user.role != 'ADMINISTRATOR':
+        log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                        'Журнал аудита',
+                        'Пользователь пытался получить доступ к журналу аудита')
+        return redirect(url_for('login'))
+    logs = Log.query.all()
+    log_audit_event(current_user.username, request.environ.get('HTTP_X_REAL_IP', request.remote_addr),
+                    'Журнал аудита',
+                    'Пользователь открыл журнал аудита')
+
+    return render_template('audit.html', logs=logs, afk_time=afk_time)
+
+
+
 @app.route('/profile')
 @login_required
 def profile():
